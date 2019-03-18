@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>Web 3D HW1</title>
+	<style></style>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js">
+	</script>
+</head>
+
+<body> 
+	<div>
+	  <img src="https://imgur.com/uEDwjWr.png" style="position:absolute;top:0vw;left:0vw;width:80vw;z-index:-1">
+	</div>
+	<div>
+	  <button id="mode" style="width:15%;position:relative;top:6vw;left:80vw;">關</button>
+	</div>
+	<div>
+	  <button id="color" style="width:15%;position:relative;top:10vw;left:80vw;">簡單模式</button>
+	</div>
+
+	<script>
+	class Light{
+  
+		constructor(top, left) {  
+			// create/append div dynamically
+			// https://stackoverflow.com/questions/14004117/create-div-and-append-div-dynamically
+			this.element = document.createElement ('div');
+			//this = iDiv;
+			this.element.id = 'light';
+			this.top = top;
+			this.left = left;
+			// set element style attribute
+			//https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
+			this.element.style.cssText = "position:absolute;width:3vw;height:3vw;border-radius:15px;z-index:1"; 
+			  this.element.style.top = this.top;
+			this.element.style.left = this.left;
+			// CSS color property: https://www.w3schools.com/cssref/pr_text_color.asp
+			// hsl: https://www.w3schools.com/colors/colors_hsl.asp
+			this.element.style.background = "hsl(0, 0%, 60%)";//預設灰色
+			document.getElementsByTagName('body')[0].appendChild(this.element);
+		}
+
+		changeColor() {
+			// https://stackoverflow.com/questions/45147661/javascript-recursion-within-a-class/45147713
+			var self = this;
+			var hue = Math.random()*200;
+			self.element.style.background = "hsl(" + hue + ", 70%, 50%)"; 
+			setTimeout (function() { self.changeColor() } , 500);
+		}
+		//
+		cazycolor() {
+			var self = this;
+			var hue = Math.random()*200;
+			var time = Math.random()*2000;
+			self.element.style.background = "hsl(" + hue + ", 70%, 50%)";   	
+			setTimeout (function() { self.cazycolor() } , time);
+		}
+	}
+
+	////////////////////////////////
+
+	init();
+	function init() {
+	  var light = new Light('15vw', '35vw');  
+	  light.changeColor();
+	  light = new Light('20vw', '46vw');
+	  light.changeColor();  
+	  light = new Light('30vw', '32vw');
+	  light.changeColor();
+	  light = new Light('30vw', '45vw');
+	  light.changeColor();  
+	  light = new Light('39vw', '20vw');
+	  light.changeColor();
+	  light = new Light('39vw', '56vw');
+	  light.changeColor();
+	  light = new Light('40vw', '39vw');
+	  light.changeColor();  
+	  light = new Light('48vw', '30vw');
+	  light.changeColor();
+	  light = new Light('48vw', '48vw');
+	  light.changeColor();
+	  light = new Light('51vw', '18vw');
+	  light.changeColor();
+	  light = new Light('51vw', '62vw');
+	  light.changeColor();
+	  light = new Light('56vw', '40vw');
+	  light.changeColor();
+	  light = new Light('58vw', '8vw');
+	  light.changeColor();
+	  light = new Light('58vw', '72vw');  
+	  light.changeColor();
+	  light = new Light('61vw', '25vw');
+	  light.changeColor();
+	  light = new Light('61vw', '56vw');
+	  light.changeColor();
+	  light = new Light('66vw', '42vw');
+	  light.changeColor();
+	  
+	}
+
+	$('#mode').click(function() {
+		mode = !mode;
+		if(mode) {
+		$(this).text("關");
+			init();
+	  }
+	  else {
+		$(this).text("開");    
+			var light = new Light('15vw', '35vw');
+		  light = new Light('20vw', '46vw');
+		  light = new Light('30vw', '32vw');
+		  light = new Light('30vw', '45vw');
+		  light = new Light('39vw', '20vw');
+		  light = new Light('39vw', '56vw');
+		  light = new Light('40vw', '39vw');
+		  light = new Light('48vw', '30vw');
+		  light = new Light('48vw', '48vw');
+		  light = new Light('51vw', '18vw');
+		  light = new Light('51vw', '62vw');
+		  light = new Light('56vw', '40vw');
+		  light = new Light('58vw', '8vw');
+		  light = new Light('58vw', '72vw');
+		  light = new Light('61vw', '25vw');
+		  light = new Light('61vw', '56vw');
+		  light = new Light('66vw', '42vw');
+	  }
+	});
+
+	$('#color').click(function() {
+		color = !color;
+	  var light;
+		if(color) {
+		$(this).text("簡單模式");
+		  light = new Light('15vw', '35vw');  
+		  light.changeColor();
+		  light = new Light('20vw', '46vw');
+		  light.changeColor();  
+		  light = new Light('30vw', '32vw');
+		  light.changeColor();
+		  light = new Light('30vw', '45vw');
+		  light.changeColor();  
+		  light = new Light('39vw', '20vw');
+		  light.changeColor();
+		  light = new Light('39vw', '56vw');
+		  light.changeColor();
+		  light = new Light('40vw', '39vw');
+		  light.changeColor();  
+		  light = new Light('48vw', '30vw');
+		  light.changeColor();
+		  light = new Light('48vw', '48vw');
+		  light.changeColor();
+		  light = new Light('51vw', '18vw');
+		  light.changeColor();
+		  light = new Light('51vw', '62vw');
+		  light.changeColor();
+		  light = new Light('56vw', '40vw');
+		  light.changeColor();
+		  light = new Light('58vw', '8vw');
+		  light.changeColor();
+		  light = new Light('58vw', '72vw');  
+		  light.changeColor();
+		  light = new Light('61vw', '25vw');
+		  light.changeColor();
+		  light = new Light('61vw', '56vw');
+		  light.changeColor();
+		  light = new Light('66vw', '42vw');
+		  light.changeColor();
+	  }
+	  else {
+		$(this).text("複雜模式");    
+			light = new Light('15vw', '35vw');  
+		  light.cazycolor();
+		  light = new Light('20vw', '46vw');
+		  light.cazycolor();  
+		  light = new Light('30vw', '32vw');
+		  light.cazycolor();
+		  light = new Light('30vw', '45vw');
+		  light.cazycolor();  
+		  light = new Light('39vw', '20vw');
+		  light.cazycolor();
+		  light = new Light('39vw', '56vw');
+		  light.cazycolor();
+		  light = new Light('40vw', '39vw');
+		  light.cazycolor();  
+		  light = new Light('48vw', '30vw');
+		  light.cazycolor();
+		  light = new Light('48vw', '48vw');
+		  light.cazycolor();
+		  light = new Light('51vw', '18vw');
+		  light.cazycolor();
+		  light = new Light('51vw', '62vw');
+		  light.cazycolor();
+		  light = new Light('56vw', '40vw');
+		  light.cazycolor();
+		  light = new Light('58vw', '8vw');
+		  light.cazycolor();
+		  light = new Light('58vw', '72vw');  
+		  light.cazycolor();
+		  light = new Light('61vw', '25vw');
+		  light.cazycolor();
+		  light = new Light('61vw', '56vw');
+		  light.cazycolor();
+		  light = new Light('66vw', '42vw');
+		  light.cazycolor();
+	  }
+	});
+
+
+	</script>
+</body>
+
+</html>
