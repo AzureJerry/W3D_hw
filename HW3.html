@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+
+<head>	
+	<title>Web 3D HW3</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+</head>
+
+<body> 
+	<h1 style="font-size:2em; text-align:center; margin:15px;">
+	積木展 The Art of the Brick — Nathan Sawaya 
+	</h1>
+
+	<div id="control"style="border:5px #5ba1b0 solid;">		
+		<b>電源開關			
+		<button id="lightswitch" style="width:4vw; height:25px; margin-top: 10px;margin-right: 10px; font-weight:bold;">開</button>			
+		Intensity
+		<input type=range min=0 max=1 step=0.1 value=0.5 id='intensity' style="width:8vw; margin-left: 5px;margin-right: 10px;">			
+		視角切換
+		<select id="switchCamera"style="width:60px;margin-left: 5px;margin-right: 10px;font-weight:bold;">
+			<option value="0">自由</option>
+			<option value="1">右上</option>
+			<option value="2">左上</option>
+			<option value="3">右下</option>
+			<option value="4">左下</option>
+		</select>					
+		作品
+		<select id="artworkCamera" style="width:135px;margin-left: 5px;margin-right: 10px;font-weight:bold;">
+			<option value="0">無</option>
+			<option value="1">黃</option>
+			<option value="2">紐約施工中</option>
+			<option value="3">地球</option>
+			<option value="4">猴子</option>
+			<option value="5">一步一階</option>
+			<option value="6">臉</option>
+			<option value="7">唱</option>
+			<option value="8">暗無希望</option>
+			<option value="9">雙手</option>
+			<option value="10">面具</option>
+			<option value="11">灰</option>
+			<option value="12">綠人</option>
+			<option value="13">缺</option>
+			<option value="14">游泳的人</option>
+			<option value="15">阿諾菲尼的婚禮</option>
+			<option value="16">戴珍珠耳環的少女</option>
+			<option value="17">十四歲的小舞者</option>
+			<option value="18">鋼琴</option>
+		</select>
+		監視畫面
+		<select id="surveillanceCamera" style="width:65px;margin-left: 5px;margin-right: 10px;font-weight:bold;">
+			<option value="0">無</option>
+			<option value="1">右上</option>
+			<option value="2">左上</option>
+			<option value="3">中間</option>
+			<option value="4">右轉角</option>
+			<option value="5">左轉角</option>
+		</select>		
+		<div id="container">
+		</div>		
+		</b>
+	</div>		
+	<div id="artwork_info">
+		<h3>ABOUT THE ART OF THE BRICK</h3>
+		THE ART OF THE BRICK is a global touring exhibition rated by CNN as one of the world's "Must See Exhibitions." These are the first art exhibitions to focus exclusively on the use of LEGO® bricks as an art medium and artist Nathan Sawaya has taken it to new heights.
+	</div>		
+	<div id="Monitor"style="background:pink;border:5px #b18f69 solid;">
+	</div>
+	
+	<style>
+	#container {
+		width: 65vw;
+		height: 38vw;
+		float: left;
+		margin-top: 10px;
+	}	
+	#artwork_info {	
+		width: 30vw;
+		height: 22vw;		
+		margin: 5px;
+		float: left;
+		background-color: #acd1d1;		
+		overflow: auto;
+	}	
+	#control {			
+		width: 65vw;
+		float: left;
+		margin: 5px;
+		text-align: center;
+		background-color: #5ba1b0;
+	}
+	#Monitor {
+		width: 29.5vw;
+		height: 18vw;
+		float: left;
+		margin: 5px;
+	}	
+	body {
+		background-color: #d8caae;
+		overflow: auto;
+	}
+	</style>
+	
+	<script>
+		var useCamera1 = false, useCamera2 = false, useCamera3 = false;
+		var lightsOff = false;
+
+		//調亮度
+		$('#intensity').change(function() {
+		  console.log($(this).val());
+		  if (!lightsOff) {
+			for (let i = 0; i < spotlight.length; i++) {
+			  spotlight[i].brightness($(this).val());
+			}
+		  }
+		})
+		
+		let lightness = document.querySelector('#intensity');
+		lightness.addEventListener('input', function() {
+		  if (!lightsOff) {
+			for (var i = 0; i < spotlight.length; i++) {
+			  spotlight[i].brightness(lightness.value);
+			}
+		  }
+		}, false);
+		
+		//電源開關
+		$('#lightswitch').click(function() {
+		  lightsOff = !lightsOff;
+
+		  if (lightsOff) {
+			for (let i = 0; i < spotlight.length; i++) {
+			  spotlight[i].turnOff();
+			}
+			$(this).text("開");
+		  } else {
+			for (let i = 0; i < spotlight.length; i++) {
+			  spotlight[i].brightness(lightness.value);
+			}
+			$(this).text("關");
+		  }
+		});
+		
+		//視角切換
+		$('#switchCamera').change(function() {
+			if(document.getElementById("surveillanceCamera").selectedIndex!=0){
+				document.getElementById("surveillanceCamera").selectedIndex = 0;				
+			}
+			useCamera1 = document.getElementById("switchCamera").options[document.getElementById("switchCamera").selectedIndex].value;
+		});
+		
+		$('#artworkCamera').change(function() {
+			useCamera2 = document.getElementById("artworkCamera").options[document.getElementById("artworkCamera").selectedIndex].value;
+			if(useCamera2 == "0")//選擇作品也會顯示說明
+				document.getElementById("artwork_info").innerHTML = "<h3>ABOUT THE ART OF THE BRICK</h3>THE ART OF THE BRICK is a global touring exhibition rated by CNN as one of the world's \"Must See Exhibitions.\" These are the first art exhibitions to focus exclusively on the use of LEGO® bricks as an art medium and artist Nathan Sawaya has taken it to new heights.";
+			else
+				document.getElementById("artwork_info").innerHTML = artwork[document.getElementById("artworkCamera").selectedIndex-1].element.name;
+		});
+		
+		//監視器切換
+		$('#surveillanceCamera').change(function() {
+			if(document.getElementById("switchCamera").selectedIndex!=0){
+				document.getElementById("switchCamera").selectedIndex = 0;				
+			}
+			useCamera3 = document.getElementById("surveillanceCamera").options[document.getElementById("surveillanceCamera").selectedIndex].value;
+		});
+		
+		//各種物件
+		class BoxGeom {
+		  constructor(width, height, depth, x, y, z) {
+			this.width = width;
+			this.height = height;
+			this.depth = depth;
+			this.x = x;
+			this.y = y;
+			this.z = z;			
+		  }
+		  
+		  create() {
+			this.element = new THREE.Mesh(new THREE.BoxBufferGeometry(this.width, this.height, this.depth), new THREE.MeshPhongMaterial());
+			this.element.position.set(this.x, this.y, this.z);
+			//this.element.receiveShadow = true;
+			//this.element.castShadow = true;
+			scene.add(this.element);
+		  }
+		}
+		//平面物件
+		class PlaneGeom {
+			constructor(texture, width, height, x, y, z, name) {
+				this.width = width;
+				this.height = height;
+				this.x = x;
+				this.y = y;
+				this.z = z;
+				this.texture = texture;
+				
+				this.element = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.height), new THREE.MeshBasicMaterial({map: this.texture}));
+				this.element.name = name;
+				this.element.position.set(this.x, this.y, this.z);
+				scene.add(this.element);
+			}
+		}
+		//聚光燈
+		class SpotLight {
+			constructor(x, y, z, targetx, targety, targetz) {
+				this.x = x;
+				this.y = y;
+				this.z = z;
+				this.targetx = targetx;
+				this.targety = targety;
+				this.targetz = targetz;
+
+				let mesh = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshNormalMaterial());
+				mesh.position.set(this.targetx, this.targety, this.targetz);
+				scene.add(mesh);
+
+				let lamp = new THREE.Object3D();
+				//let axis = new THREE.AxisHelper(50);
+				//lamp.add(axis);
+				let lampbody = new THREE.Mesh(new THREE.CylinderGeometry(12, 5, 20), new THREE.MeshNormalMaterial());
+				lamp.add(lampbody);
+
+				lampbody.position.set(0, 0, 10);
+				lampbody.rotation.x = Math.PI / 2;
+				lamp.position.set(this.x, this.y, this.z); // fix to a point on ceiling
+				lamp.lookAt(mesh.position);
+				scene.add(lamp);
+
+				this.element = new THREE.SpotLight(0xffffff);
+				this.element.position.copy(lamp.position);
+				this.element.intensity = 0.5;
+				this.element.angle = 0.6;
+				this.element.penumbra = 0.4;
+				this.element.distance = 300;
+				this.element.decay = 0.7;
+				this.element.target = mesh;	
+				scene.add(this.element);			
+				/*
+				this.element.castShadow = true;//陰影			
+				this.element.shadow.mapSize.width = 128;
+				this.element.shadow.mapSize.height = 128;
+				this.element.shadow.camera.near = 0.5;
+				this.element.shadow.camera.far = 300;
+				*/	
+			}					
+			brightness(b) {
+				this.element.intensity = b;
+			}
+			turnOff() {
+				this.element.intensity = 0;
+			}
+		}
+		
+		class CameraCase {
+			constructor(posx,posy,posz,rx,ry){
+				this.posx = posx;
+				this.posy = posy;
+				this.posz = posz;
+				this.rx = rx;
+				this.ry = ry;
+				this.element = new THREE.Object3D();
+				//this.element.add (new THREE.AxisHelper (80))
+				let cameraBody = new THREE.Mesh (new THREE.BoxGeometry (10,10,20), new THREE.MeshNormalMaterial());			
+				let lens = new THREE.Mesh (new THREE.CylinderGeometry (3,3,18), new THREE.MeshNormalMaterial());
+				lens.position.z = -5;
+				lens.rotation.x = Math.PI/2;
+				this.element.add (cameraBody, lens);
+
+				let cameraCase = new THREE.Object3D();
+				cameraCase.add (this.element);
+				cameraCase.position.set (this.posx, this.posy, this.posz);
+				cameraCase.rotation.y = this.rx; 
+				cameraCase.rotation.x = this.ry;
+				cameraCase.rotation.order = 'YXZ'
+				scene.add (cameraCase);
+			}
+		}
+		///////////////////////////////////////////
+		var scene, renderer, camera;
+		var sceneMonitor, rendererMonitor, cameraMonitor;
+		var mouse = new THREE.Vector2();
+		var mouseMon = new THREE.Vector2();
+		var raycaster = new THREE.Raycaster();
+		var Cornercamera = [], artworkCamera = [];
+		var spotlight = [];
+		var pickables = [];
+		var artwork = [], artworkTex = [], artwork_description = [];	
+		var angle = 0, sign = 1;
+		var sCameraobj = [], sCamera = [];
+		
+		init();
+		animate();
+
+		//init
+		function init() {
+			//主畫面
+			renderer = new THREE.WebGLRenderer({
+				antialias: true
+			});
+			var ww = $('#container').innerWidth();
+			var hh = $('#container').innerHeight();
+			renderer.setSize(ww, hh);
+			renderer.setClearColor(0xd8caae);
+			$('#container').append(renderer.domElement);
+			scene = new THREE.Scene();
+			//renderer.shadowMap.enabled = true;
+			//renderer.shadowMap.type = THREE.PCFShadowMap;
+			camera = new THREE.PerspectiveCamera(45, ww / hh, 1, 10000);
+			camera.position.y = 1800;
+			camera.position.z = 1800;
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			
+			//監視器畫面
+			rendererMonitor = new THREE.WebGLRenderer({
+				antialias: true
+			});
+			var ww2 = $('#Monitor').innerWidth();
+			var hh2 = $('#Monitor').innerHeight();
+			rendererMonitor.setSize(ww2, hh2);
+			rendererMonitor.setClearColor(0xd8caae);
+			$('#Monitor').append(rendererMonitor.domElement);
+			controls = new THREE.OrbitControls(camera, rendererMonitor.domElement);
+			
+			window.addEventListener('resize', onWindowResize, false);
+			window.addEventListener('mousedown', onDocumentMouseDown, false);
+			
+			//////////////////////////////////////////////////////////////////////////////
+			let floorWidth = 3000;//地板寬度
+			let floorHeight = 1800;//地板長度
+			let wallHeight = 200; //牆高
+			let wallDepth = 10; //牆厚  
+			
+			//材質
+			let loader = new THREE.TextureLoader();
+			loader.crossOrigin = '';
+			
+			//地板材質		
+			texture = loader.load('https://i.imgur.com/6J3Pftx.jpg');
+			texture.wrapS = texture.wrapT = true;
+
+			//地板幾何
+			let floor = new THREE.Mesh(new THREE.PlaneBufferGeometry(floorWidth, floorHeight), new THREE.MeshPhongMaterial({
+			side: THREE.FrontSide,
+			map: texture
+			}));
+			//floor.receiveShadow = true;	//超過13個光材質顯示不出來
+			floor.rotation.x = -Math.PI / 2;
+			scene.add(floor);
+			
+			//圍牆			
+			let wall1 = new BoxGeom(wallDepth, wallHeight, floorHeight, floorWidth / 2 - wallDepth / 2, wallHeight / 2, 0).create();
+			let wall2 = new BoxGeom(wallDepth, wallHeight, floorHeight, -floorWidth / 2 + wallDepth / 2, wallHeight / 2, 0).create();
+			let wall3 = new BoxGeom(floorWidth, wallHeight, wallDepth, 0, wallHeight / 2, -floorHeight / 2 + wallDepth / 2).create();
+			let wall4 = new BoxGeom(floorWidth - 600, wallHeight, wallDepth, 0, wallHeight / 2, floorHeight / 2 - wallDepth / 2).create();
+			//內牆
+			let wall5 = new BoxGeom(600, wallHeight, wallDepth, floorWidth / 2 - 600, wallHeight / 2, -200).create();
+			let wall6 = new BoxGeom(wallDepth, wallHeight, 400, floorWidth / 2 - 900, wallHeight / 2, -floorHeight / 2 + 500).create();
+			let wall7 = new BoxGeom(600, wallHeight, wallDepth, -floorWidth / 2 + 600, wallHeight / 2, -200).create();
+			let wall8 = new BoxGeom(wallDepth, wallHeight, 400, -floorWidth / 2 + 900, wallHeight / 2, -floorHeight / 2 + 500).create();
+			let wall9 = new BoxGeom(wallDepth, wallHeight, 800, 0, wallHeight / 2, -200).create();
+			let wall10 = new BoxGeom(1500, wallHeight, wallDepth, 0, wallHeight / 2, 200).create();
+			let wall11 = new BoxGeom(wallDepth, wallHeight, 400, 750, wallHeight / 2, floorHeight / 2 - 200).create();
+			let wall12 = new BoxGeom(wallDepth, wallHeight, 400, -750, wallHeight / 2, floorHeight / 2 - 200).create();
+
+			//長椅左
+			let bench1 = new BoxGeom(220, 10, 80, 900, 40, -400).create();
+			let bench2 = new BoxGeom(10, 40, 80, 800, 20, -400).create();
+			let bench3 = new BoxGeom(10, 40, 80, 1000, 20, -400).create();
+			//長椅右
+			let bench4 = new BoxGeom(220, 10, 80, -900, 40, -400).create();
+			let bench5 = new BoxGeom(10, 40, 80, -800, 20, -400).create();
+			let bench6 = new BoxGeom(10, 40, 80, -1000, 20, -400).create();
+
+			//藝術品物件
+			artworkTex[0] = loader.load ("https://i.imgur.com/5mpRvU9.jpg");
+			artwork_description[0] = "<b><br>作品名稱: 黃<br>積木數量 : 11,014<br>89 x 71 x 33cm<br><br>這應該是我最知名的作品。<br>這件作品展出十，總是吸引許多人的注意，從成人到小孩都有。<br><br>為甚麼呢?<br><br>身為大人，我們認同「世界敞開心胸」是對心靈是有好處的。但對小朋友來說，也許是因為黃色的積木從身體裡面掉出來，所以覺得很酷吧!<br><br>而對我來說，這件作品則是代表著自己人生經歷的轉變。</b>";
+			artwork[0] = new PlaneGeom(artworkTex[0], 88.8, 156, 615, 100, -400, artwork_description[0]);
+			artwork[0].element.rotation.y = Math.PI/2;			
+			artworkTex[1] = loader.load ("https://i.imgur.com/J3pcnCG.jpg");
+			artwork_description[1] = "<b><br>作品名稱: 紐約施工中<br>積木數量 : 2,820<br>48 x 107 x 76 cm<br><br>在那些需要紐約工作室的作品搬進搬出的時候，在管理人行道上的人流，警示錐總是能派上用場。</b>";
+			artwork[1] = new PlaneGeom(artworkTex[1], 208, 118.4, 1000, 100, -210, artwork_description[1]);
+			artwork[1].element.rotation.y = Math.PI;
+			//
+			artworkTex[2] = loader.load ("https://i.imgur.com/M8O9iaS.jpg");
+			artwork_description[2] = "<b><br>作品名稱: 地球<br>積木數量 :  2,253x<br>43 x 36 x 38 cm<br><br>雖然聽起來很老套， <br>但，將全世界握在手中的感覺簡直太棒了<br><br>旋轉~你會在哪裡完美落地? <br><br>用矩形的樂高積木做出球體是一個非常大的挑戰。能做出完美的樂高球體，是我創作生涯中很重要的一步。</b>";			
+			artwork[2] = new PlaneGeom(artworkTex[2], 88.8, 156, -615, 100, -400, artwork_description[2]);
+			artwork[2].element.rotation.y = -Math.PI/2;			
+			artworkTex[3] = loader.load ("https://i.imgur.com/KHUqXNt.jpg");
+			artwork_description[3] = "<b><br>作品名稱: 猴子<br>積木數量 : 1,018<br>89 x 71 x 33cm<br><br>靈感來自喬治 戴利<br>一隻知名魔術大師大衛 考柏菲一同巡演的猴子。<br>在這件作品上使用上百個棕色及深色的積木拼成。</b>";			
+			artwork[3] = new PlaneGeom(artworkTex[3], 88.8, 156, -1000, 100, -210, artwork_description[3]);
+			artwork[3].element.rotation.y = Math.PI;
+			////
+			artworkTex[4] = loader.load ("https://i.imgur.com/RwCrBTK.jpg");
+			artwork_description[4] = "<b><br>作品名稱: 一步一階<br>積木數量 : 4,054<br>66 x 26 x 20 cm<br><br>有時候，你不斷尋找下一步該何去何從，<br>但其實不用擔心......<br><br>我們所擁有的能力是超乎想像的。</b>";			
+			artwork[4] = new PlaneGeom(artworkTex[4], 88.8, 156, 0, 100, 210, artwork_description[4]);
+			artwork[4].element.rotation.y = 0;			
+			artworkTex[5] = loader.load ("https://i.imgur.com/W8BtUyg.jpg");
+			artwork_description[5] = "<b><br>作品名稱: 臉<br>積木數量 : 10,770<br>89 x 71 x 33 cm<br><br>這件作品是自銷像。<br>我參考好幾十張自己各種角度的照片，<br>才做成這個超大型的雕像。<br><br>這件作品耗費了超過一個月的時間(2009)才完成</b>";			
+			artwork[5] = new PlaneGeom(artworkTex[5], 88.8, 156, 500, 100, 210, artwork_description[5]);
+			artwork[5].element.rotation.y = 0;			
+			artworkTex[6] = loader.load ("https://i.imgur.com/h6NZj2Y.jpg");
+			artwork_description[6] = "<b><br>作品名稱: 唱<br><br>靈感來自於一位朋友的演出<br><br>當時，我被她的歌聲深深吸引著。<br>於是馬上從口袋拿出紙巾寫下《唱》的草稿。<br><br>她與音樂合而為一，而這件作品則將那個瞬間保存下來。</b>";			
+			artwork[6] = new PlaneGeom(artworkTex[6], 88.8, 156, -500, 100, 210, artwork_description[6]);
+			artwork[6].element.rotation.y = 0;
+			////
+			artworkTex[7] = loader.load ("https://i.imgur.com/vi7DDgf.jpg");
+			artwork_description[7] = "<b><br>作品名稱: 暗無希望<br>積木數量 : 11,274<br>81 x 71 x 43 cm<br><br>當孩子希望隱形的時候，<br>會用手矇住眼睛，讓自己看不見外面的世界。<br>他們會告訴自己 : 這個世界再也找不到我了。<br><br>直到現在，我們還使用相同伎倆，即使我們長大了。</b>";			
+			artwork[7] = new PlaneGeom(artworkTex[7], 88.8, 156, 0, 100, 880, artwork_description[7]);
+			artwork[7].element.rotation.y = Math.PI;			
+			artworkTex[8] = loader.load ("https://i.imgur.com/mU7SSnr.jpg");
+			artwork_description[8] = "<b><br>作品名稱: 雙手<br>積木數量 : 15,161<br>99 x 56 x 64 cm<br><br>這件作品是我真正的惡夢，畢竟雙手是我最重要的工具。<br><br>它耗費了我三個禮拜、使用超過15000顆積木才完成。</b>";			
+			artwork[8] = new PlaneGeom(artworkTex[8], 88.8, 156, 500, 100, 880, artwork_description[8]);
+			artwork[8].element.rotation.y = Math.PI;			
+			artworkTex[9] = loader.load ("https://i.imgur.com/SLIsOdh.jpg");
+			artwork_description[9] = "<b><br>作品名稱: 面具<br>積木數量 : 11,014<br>89 x 71 x 33cm<br><br>面具出現在世界上的各種文化中，<br>它被使用來掩飾自我並展現出想被他人看到的樣貌。<br><br>我透過創造這件作品來揭示真正的自我，<br>時常我們為了別人戴上不同的面具卻忘了真的自己，<br>「面具」卻能認出隱藏在背後的面容。</b>";			
+			artwork[9] = new PlaneGeom(artworkTex[9], 88.8, 156, -500, 100, 880, artwork_description[9]);
+			artwork[9].element.rotation.y = Math.PI;
+			////
+			artworkTex[10] = loader.load ("https://i.imgur.com/3Zu0evH.jpg");
+			artwork_description[10] = "<b><br>作品名稱: 灰<br>積木數量 : 23,678<br>114 x 114 x 38 cm<br><br>跨出第一步總是最困難的。<br><br>我曾經是個律師，當律師沒有甚麼不好的地方，<br>但我一直明白內心深處有一個藝術家潛伏著。<br>有天，我決定將藝術家的自己釋放出來，<br><br>而我，從來沒有後悔過。</b>";			
+			artwork[10] = new PlaneGeom(artworkTex[10], 208, 118.4, 200, 100, 180, artwork_description[10]);
+			artwork[10].element.rotation.y = Math.PI;			
+			artworkTex[11] = loader.load ("https://i.imgur.com/xODw7QN.jpg");
+			artwork_description[11] = "<b><br>作品名稱: 綠人<br>積木數量 : 8,990<br>76 x 69 x 38 cm<br><br>有時候生活過於忙碌，腦子有太多思緒。<br><br>如果可以把腦袋拔起來，倒空雜亂無章的想法，<br><br>我透過創造這件作品來揭示真正的自我，<br><br>就太好了。</b>";			
+			artwork[11] = new PlaneGeom(artworkTex[11], 208, 118.4, 500, 100, 180, artwork_description[11]);
+			artwork[11].element.rotation.y = Math.PI;			
+			artworkTex[12] = loader.load ("https://i.imgur.com/hHXtByy.jpg");
+			artwork_description[12] = "<b><br>作品名稱: 缺<br>積木數量 : 13,122<br>152 x 48 x 36 cm<br><br>有沒有那幾天，你的付出讓你感到被掏空了?<br><br>有沒有那幾天，無論多努力，你都沒辦法將事情完成。<br><br>《缺》就是將這些感覺轉換成實體的作品。</b>";			
+			artwork[12] = new PlaneGeom(artworkTex[12], 88.8, 156, -200, 100, 180, artwork_description[12]);
+			artwork[12].element.rotation.y = Math.PI;			
+			artworkTex[13] = loader.load ("https://i.imgur.com/bWe135b.jpg");
+			artwork_description[13] = "<b><br>作品名稱: 游泳的人<br>積木數量 : 10,980<br>33 x 201 x 76 cm<br><br>雖然只能看見水面上的部份，<br>但你的想像力能填補水面下的畫面。<br><br>耗時15天才能完成這件作品。</b>";			
+			artwork[13] = new PlaneGeom(artworkTex[13], 208, 118.4, -500, 100, 180, artwork_description[13]);
+			artwork[13].element.rotation.y = Math.PI;
+			////
+			artworkTex[14] = loader.load ("https://i.imgur.com/zM0jSCR.jpg");
+			artwork_description[14] = "<b><br>作品名稱: 阿諾菲尼的婚禮<br>積木數量 : 7,023<br>89 x 76 x 33 cm<br><br>藝術史上爭論這幅畫作究竟描繪的一場真正的婚禮?<br>或只是當時畫肖像的流行?<br><br>畫中的主角是喬凡尼 阿諾菲尼夫婦，兩人都是來自義大利的富貴之家。男人站在床邊宣讀誓言的姿勢，象徵主題是婚禮，但這對夫妻身邊豪奢的裝飾及男人幾乎沒舉起宣誓的手勢，引起廣泛的討論。不論是真婚禮還是趕流行，這件作品都完美呈現文藝復興時期的大師兒-范艾克，用最擅長的寫實手法精細地表現出光影，並藉由鮮明的色彩結合主角的貴族外貌，造就一件偉大的藝術作品。在當時，油畫還是一種新穎的媒材，而范艾克的存熟技巧，推進了油畫的重要性。<br><br>用樂高重新詮釋這幅作品，我決定將主角從平面轉化到立體的雕塑，這也意味者我必須組織在原來畫作中看不到的背景，像是原本主角被擋住的家具。<br><br>重新詮釋的結果，讓作品呈現出更立體的效果。<br>";			
+			artwork[14] = new PlaneGeom(artworkTex[14], 88.8, 156, 10, 100, -400, artwork_description[14]);
+			artwork[14].element.rotation.y = Math.PI/2;			
+			artworkTex[15] = loader.load ("https://i.imgur.com/H9YaoKg.jpg");
+			artwork_description[15] = "<b><br>作品名稱: 戴珍珠耳環的少女<br>積木數量 : 1,694<br>56 x 48 cm<br><br>這幅畫又被稱為「北方的蒙娜麗莎」，很可能是因為畫中人物引人入迷地凝視。少女純真但又令人感覺飽經世事，再加上她雖然身著僕人的衣服，耳上卻帶著大珍珠耳環。我們並不清楚畫中主角的年紀，而人們對於她的身份也一直爭論不休。據說她可能的身份有三個 : 維梅爾的女兒瑪麗亞，也有可能是維梅爾的客戶的女兒瑪德蓮范克芬，或是維梅爾家中的女傭赫里特。<br><br>維梅爾是擅長表現光線的繪畫大師，作品中的光線溫度是冷熱並存的。他被認為是17世紀最偉大的畫家之一，但現在被認為是無價之寶的作品，卻在1881年時乏人問津。<br><br>我用了一些非傳統的顏色來詮釋原作中的光影，在畫面中加入一些層次，將主角向外推了一層，另外，我特別使用圖形樂高去強調他的珍珠耳環。</b>";			
+			artwork[15] = new PlaneGeom(artworkTex[15], 88.8, 156, -10, 100, -400, artwork_description[15]);
+			artwork[15].element.rotation.y = -Math.PI/2;
+			artworkTex[16] = loader.load ("https://i.imgur.com/7Q8cTXn.jpg");
+			artwork_description[16] = "<b><br>作品名稱: 十四歲的小舞者<br>積木數量 : 7,100<br>107 x 48 x 51 cm <br><br>竇加終其一生只展示過一件雕塑品，<br>就是《十四歲的小舞者》。<br><br>雕塑運用了真正的毛髮，女孩的芭蕾舞衣和舞鞋也是真實的布做的。竇加的雕塑的傳統，就像他一直在顛覆繪畫的傳統一樣。竇加的雕塑運用到三度空間的特質，因此不能只從單一視角來看，必須環繞著雕像從不同的位置來欣賞。<br><br>在樂高的版本上，我想捕捉原作中那自我肯定的神情。如何讓芭蕾舞裙跟蝴蝶結表現出布料的質地，著實令我傷透腦筋。原本的雕塑是站在木頭上的，我試著使用相近色的樂高來製作。</b>";			
+			artwork[16] = new PlaneGeom(artworkTex[16], 88.8, 156, -10, 100, -50, artwork_description[16]);
+			artwork[16].element.rotation.y = -Math.PI/2;
+			artworkTex[17] = loader.load ("https://i.imgur.com/tOaSVvq.jpg");
+			artwork_description[17] = "<b><br>作品名稱: 鋼琴<br>積木數量 : 24,750<br>尺寸 : 琴蓋打開<br>175 x 145 x 170 cm<br>座椅 : 43 x 33 x 58 cm<br><br>這件作品希望能啟發孩子們對於音樂的探索。<br><br>按照實際比例的作品，全部都是樂高打造的，有的人也許會覺得它真的很(偉)大。<br><br>雖然，跟真的鋼琴一樣大小，但請不要動手談起來呀!<br><br>它長得像鋼琴，聽起來卻是樂高呢!</b>";			
+			artwork[17] = new PlaneGeom(artworkTex[17], 208, 118.4, 10, 100, -50, artwork_description[17]);
+			artwork[17].element.rotation.y = Math.PI/2;
+			//
+			for (let i= 0;i<artwork.length;i++)
+				pickables.push (artwork[i].element);
+				
+			//藝術品視角			
+			artworkCamera[0] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[0].position.set(800, 100, -400);
+			artworkCamera[0].lookAt({
+			x: 600,
+			y: 100,
+			z: -400
+			});			
+			artworkCamera[1] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[1].position.set(1000, 100, -400);
+			artworkCamera[1].lookAt({
+			x: 1000,
+			y: 100,
+			z: -150
+			});			
+			artworkCamera[2] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[2].position.set(-800, 100, -400);
+			artworkCamera[2].lookAt({
+			x: -600,
+			y: 100,
+			z: -400
+			});			
+			artworkCamera[3] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[3].position.set(-1000, 100, -400);
+			artworkCamera[3].lookAt({
+			x: -1000,
+			y: 100,
+			z: -150
+			});		
+			artworkCamera[4] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[4].position.set(0, 100, 400);
+			artworkCamera[4].lookAt({
+			x: 0,
+			y: 100,
+			z: 200
+			});	
+			artworkCamera[5] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[5].position.set(500, 100, 400);
+			artworkCamera[5].lookAt({
+			x: 500,
+			y: 100,
+			z: 200
+			});	
+			artworkCamera[6] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[6].position.set(-500, 100, 400);
+			artworkCamera[6].lookAt({
+			x: -500,
+			y: 100,
+			z: 200
+			});		
+			artworkCamera[7] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[7].position.set(0, 100, 700);
+			artworkCamera[7].lookAt({
+			x: 0,
+			y: 100,
+			z: 900
+			});		
+			artworkCamera[8] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[8].position.set(500, 100, 700);
+			artworkCamera[8].lookAt({
+			x: 500,
+			y: 100,
+			z: 900
+			});	
+			artworkCamera[9] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[9].position.set(-500, 100, 700);
+			artworkCamera[9].lookAt({
+			x: -500,
+			y: 100,
+			z: 900
+			});			
+			artworkCamera[10] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[10].position.set(200, 100, 0);
+			artworkCamera[10].lookAt({
+			x: 200,
+			y: 100,
+			z: 200
+			});	
+			artworkCamera[11] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[11].position.set(500, 100, 0);
+			artworkCamera[11].lookAt({
+			x: 500,
+			y: 100,
+			z: 200
+			});	
+			artworkCamera[12] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[12].position.set(-200, 100, 0);
+			artworkCamera[12].lookAt({
+			x: -200,
+			y: 100,
+			z: 200
+			});	
+			artworkCamera[13] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[13].position.set(-500, 100, 0);
+			artworkCamera[13].lookAt({
+			x: -500,
+			y: 100,
+			z: 200
+			});	
+			artworkCamera[14] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[14].position.set(200, 100, -400);
+			artworkCamera[14].lookAt({
+			x: 0,
+			y: 100,
+			z: -400
+			});	
+			artworkCamera[15] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[15].position.set(-200, 100, -400);
+			artworkCamera[15].lookAt({
+			x: 0,
+			y: 100,
+			z: -400
+			});	
+			artworkCamera[16] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[16].position.set(-200, 100, -50);
+			artworkCamera[16].lookAt({
+			x: 0,
+			y: 100,
+			z: -50
+			});	
+			artworkCamera[17] = new THREE.PerspectiveCamera(45, ww / hh, 1, 5000);
+			artworkCamera[17].position.set(200, 100, -50);
+			artworkCamera[17].lookAt({
+			x: 0,
+			y: 100,
+			z: -50
+			});	
+			//自然光			
+			var directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+			directionalLight.position.set(1, 1, 1);
+			scene.add(directionalLight);
+			var directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.7);
+			directionalLight2.position.set(-1, 1, -1);
+			scene.add(directionalLight2);
+
+			//展品照明		
+			let celling = 200;
+			spotlight[0] = new SpotLight(700, celling, -400, 600, 100, -400);
+			spotlight[1] = new SpotLight(1000, celling, -300, 1000, 100, -200);
+			spotlight[2] = new SpotLight(-700, celling, -400, -600, 100, -400);
+			spotlight[3] = new SpotLight(-1000, celling, -300, -1000, 100, -200);
+			spotlight[4] = new SpotLight(0, celling, 300, 0, 100, 200);
+			spotlight[5] = new SpotLight(500, celling, 300, 500, 100, 200);
+			spotlight[6] = new SpotLight(-500, celling, 300, -500, 100, 200);
+			spotlight[7] = new SpotLight(0, celling, 800, 0, 100, 900);			
+			spotlight[8] = new SpotLight(500, celling, 800, 500, 100, 900);
+			spotlight[9] = new SpotLight(-500, celling, 800, -500, 100, 900);
+			spotlight[10] = new SpotLight(200, celling, 100, 200, 100, 200);
+			spotlight[11] = new SpotLight(500, celling, 100, 500, 100, 200);
+			spotlight[12] = new SpotLight(-200, celling, 100, -200, 100, 200);
+			spotlight[13] = new SpotLight(-500, celling, 100, -500, 100, 200);
+			spotlight[14] = new SpotLight(100, celling, -400, 0, 100, -400);
+			spotlight[15] = new SpotLight(-100, celling, -400, 0, 100, -400);
+			spotlight[15] = new SpotLight(-100, celling, -400, 0, 100, -400);
+			spotlight[16] = new SpotLight(-100, celling, -50, 0, 100, -50);
+			spotlight[17] = new SpotLight(100, celling, -50, 0, 100, -50);
+			
+			/////////////////////////////////////////////////////////////////
+			//監視器物件+視角
+			sCameraobj[0] = new CameraCase(1480, 195, -880, Math.PI*3/4, -Math.PI/2*20/180);
+			sCameraobj[1] = new CameraCase(-1480, 195, -880, -Math.PI*3/4, -Math.PI/2*20/180);
+			sCameraobj[2] = new CameraCase(0, 195, 880, 0, -Math.PI/2*20/180);
+			sCameraobj[3] = new CameraCase(600, 195, -200, Math.PI, -Math.PI/2*20/180);
+			sCameraobj[4] = new CameraCase(-600, 195, -200, -Math.PI, -Math.PI/2*20/180);
+			
+			//監視器畫面
+			sCamera[0] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			sCamera[1] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			sCamera[2] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			sCamera[3] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			sCamera[4] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			
+			//角落視角
+			Cornercamera[0] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			Cornercamera[0].position.set(2100, 900, -900);
+			Cornercamera[0].lookAt({
+			x: 600,
+			y: 100,
+			z: -100
+			});
+			Cornercamera[1] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			Cornercamera[1].position.set(-2100, 900, -900);
+			Cornercamera[1].lookAt({
+			x: -600,
+			y: 100,
+			z: -100
+			});
+			Cornercamera[2] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			Cornercamera[2].position.set(2000, 900, 1500);
+			Cornercamera[2].lookAt({
+			x: 200,
+			y: 100,
+			z: -100
+			});
+			Cornercamera[3] = new THREE.PerspectiveCamera(45, ww2 / hh2, 1, 5000);
+			Cornercamera[3].position.set(-2000, 900, 1500);
+			Cornercamera[3].lookAt({
+			x: -200,
+			y: 100,
+			z: -100
+			});
+
+		}
+		
+		function onDocumentMouseDown(event) {
+			var viewportPos =$('#container').get(0).getBoundingClientRect(); //主視窗點擊事件
+			mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+			mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+			
+			var viewportMonPos =$('#Monitor').get(0).getBoundingClientRect(); //監視器點擊事件
+			mouseMon.x = ((event.clientX - viewportMonPos.left) / $('#Monitor').innerWidth()) * 2 - 1;
+			mouseMon.y = -((event.clientY - viewportMonPos.top) / $('#Monitor').innerHeight()) * 2 + 1;
+
+			raycaster.setFromCamera(mouse, camera);
+			var intersects = raycaster.intersectObjects (pickables);
+			if (intersects.length > 0) {
+				document.getElementById("artwork_info").innerHTML = intersects[0].object.name;
+			}
+
+			raycaster.setFromCamera(mouseMon, camera);
+			var intersects = raycaster.intersectObjects (pickables);
+			if (intersects.length > 0) {
+				document.getElementById("artwork_info").innerHTML = intersects[0].object.name;
+			}
+		}
+		
+		function onWindowResize() {
+			var ww = $('#container').innerWidth();
+			var hh = $('#container').innerHeight();
+			camera.aspect = ww / hh;
+			camera.updateProjectionMatrix();
+			renderer.setSize(ww, hh);
+		}			
+		var angle = 0;
+		function animate() {
+			requestAnimationFrame(animate);
+			//監視器轉動	
+			let max = 0.5, min = -0.5;
+
+			angle += 0.01*sign;
+			if (angle > max || angle < min) {
+				sign = 0;
+				setTimeout(function(){
+					if(angle > max)
+						sign = -1;
+					if(angle < min)
+						sign = 1;
+				},1000);	
+			}
+			
+			
+			for(let i=0; i < sCameraobj.length; i++){
+				sCameraobj[i].element.rotation.y = angle;
+				sCamera[i].matrixWorld.copy (sCameraobj[i].element.matrixWorld);
+				sCamera[i].matrixAutoUpdate = false;
+			}
+			
+			
+			//副畫面視角切換
+			var monitorCamera;
+			if(useCamera1 > 0)
+				monitorCamera = Cornercamera[useCamera1-1]
+			else
+				monitorCamera = camera;
+
+			//主畫面+作品視角切換
+			var mainCamera;
+			if(useCamera2 > 0)
+				mainCamera = artworkCamera[useCamera2-1]
+			else
+				mainCamera = camera;
+
+			//監視器視角切換
+			var surveillanceCamera;
+			if(useCamera3 > 0)
+				surveillanceCamera = sCamera[useCamera3-1]
+			else
+				surveillanceCamera = camera;
+			
+		    render(monitorCamera, mainCamera, surveillanceCamera);
+		}
+		
+		function render(monitorCamera, mainCamera, surveillanceCamera) {
+			renderer.render(scene, mainCamera);
+			if(document.getElementById("surveillanceCamera").selectedIndex != 0)
+				rendererMonitor.render(scene, surveillanceCamera);
+			else if(document.getElementById("switchCamera").selectedIndex != 0)			
+				rendererMonitor.render(scene, monitorCamera);
+			else
+				rendererMonitor.render(scene, monitorCamera);
+		}
+		
+	</script>
+</body>
+
+</html>
