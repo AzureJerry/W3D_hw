@@ -1,0 +1,252 @@
+<html>
+	<head>
+		<title>Web 3D HW4</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	</head>
+	
+	<body>
+		<h1 style="font-size:2em; text-align:center; margin:15px;">
+		HW4 
+		</h1>
+
+		<div id="control" style="border:5px #5ba1b0 solid;">	
+				
+			<b>啟動/暫停		
+			<button id="toggle" style="width:5vw; height:25px; margin-top: 10px; smargin-right: 10px; font-weight:bold;">暫停</button>			
+			Radius
+			<input type=range min=30 max=70 step=5 id='radius' style="width:10vw; margin-left: 5px; margin-right: 10px;">
+		
+			<div id="circlePosition">
+			</div>
+			<div id="rectanglePosition">
+			</div>
+			<div id="hit">No Collision
+			</div>			
+			</b>
+			
+			<div id="container">
+			</div>	
+			
+		</div>		
+
+		<style>
+		#container {
+			width: 65vw;
+			height: 38vw;
+			float: left;
+			margin-top: 10px;
+		}	
+	
+		#control {			
+			width: 65vw;
+			float: left;
+			margin-left: 17vw;
+			text-align: center;
+			background-color: #5ba1b0;
+		}
+		
+		#circlePosition {
+			text-align: left;
+		}
+			
+		#rectanglePosition {
+			text-align: left;
+		}
+		
+		body {
+			background-color: #d8caae;
+			overflow: auto;
+		}
+		</style>
+
+		<script>
+		var rad;		
+		var motion = true;
+		
+		//開關
+		$('#toggle').click ( function() {
+			if(motion){
+				motion = !motion;
+				$(this).text("啟動");
+			}else{
+				$(this).text("暫停");
+				motion = true;
+			}
+		    console.log ("motion: " + motion);
+		});
+		
+		//半徑
+		rad = document.querySelector('#radius'); 
+		rad.addEventListener('input', function () {
+			scene.remove(circle.element);
+			circle = new Circle(rad.value);
+			//console.log('addEventListener: ' + rad.value);
+		}, false); 
+
+		class Circle {
+			constructor(radius){		//白色
+				this.radius = radius;
+				this.element = new THREE.Mesh (new THREE.CircleGeometry (this.radius, 32),
+				new THREE.MeshBasicMaterial({
+					color: 0xffffff
+				}));
+				scene.add (this.element);
+			}
+			
+			hit(radius){			//碰撞紅色
+				scene.remove(this.element);
+				this.element = new THREE.Mesh (new THREE.CircleGeometry (radius, 32),			
+						new THREE.MeshBasicMaterial({
+							color: 0xf6646c
+						}));
+				scene.add (this.element);
+			}
+		}		
+		
+		var camera, scene, renderer, circle, radius, rectangle;
+		var pos, vel;
+		var mouse = new THREE.Vector2();
+		var raycaster, plane;
+		var pickables = [];
+		
+		init();
+		animate();
+		
+		function init() {
+			var ww = $("#container").innerWidth();
+			var hh = $("#container").innerHeight();
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize(ww, hh);
+			renderer.setClearColor(0x888888);
+			$("#container").append(renderer.domElement);
+			  
+			////////////////////////////////////////////////
+
+			scene = new THREE.Scene();
+			camera = new THREE.OrthographicCamera (-ww,ww,hh,-hh,-1, 1000);
+			camera.position.z = 1;
+			
+			//可捕捉位置的平面
+			plane = new THREE.Mesh(
+			new THREE.PlaneBufferGeometry(ww*2, hh*2),
+			new THREE.MeshBasicMaterial({
+			  color: 0xff0000,
+			  opacity: 0.25,
+			  transparent: true
+			}));
+			plane.material.visible = false; // invisible, for picking only
+			scene.add(plane);
+			pickables = [plane];
+			
+			//圓形
+			circle = new Circle(rad.value);
+			
+			//長方形
+			rectangle = new THREE.Mesh(new THREE.PlaneBufferGeometry(400, 200),
+				new THREE.MeshBasicMaterial({
+					color: 0x64b5f6
+				}));
+			scene.add(rectangle);			
+			//console.log(rectangle.position);	
+			
+			
+			//框框範圍
+			let geometry = new THREE.Geometry();
+			geometry.vertices.push(
+				new THREE.Vector3(-ww*3/4, -hh*3/4, 0),
+				new THREE.Vector3(ww*3/4, -hh*3/4, 0),
+				new THREE.Vector3(ww*3/4, hh*3/4, 0),
+				new THREE.Vector3(-ww*3/4, hh*3/4, 0),
+				new THREE.Vector3(-ww*3/4, -hh*3/4, 0));
+
+			let border = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+				color: 0x0000ff
+			}));
+			scene.add(border);
+
+			pos = new THREE.Vector3();
+			vel = new THREE.Vector3(5,4,0);
+			raycaster = new THREE.Raycaster();
+			
+			document.querySelector('#container').addEventListener('mousedown', onDocumentMouseDown, false);
+			window.addEventListener('resize', onWindowResize, false);
+		}	
+		
+		function onDocumentMouseDown(event) {
+			event.preventDefault();
+
+			
+			var viewportPos = $('#container').get(0).getBoundingClientRect();		//getBoundingClientRect()
+			mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+			mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+			
+			raycaster.setFromCamera(mouse, camera);
+			var intersects = raycaster.intersectObjects(pickables);
+			if (intersects.length > 0) {
+				rectangle.position.copy(intersects[0].point);
+			}
+		}
+		
+		function onWindowResize() {
+			var ww = $("#container").innerWidth();
+			var hh = $("#container").innerHeight();
+
+			camera.aspect = ww / hh;
+			camera.updateProjectionMatrix();
+			renderer.setSize(ww, hh);
+		}
+
+		function animate() {
+			var ww = $("#container").innerWidth();
+			var hh = $("#container").innerHeight();
+			dt = motion ? 2 : 0;
+			pos.add (vel.clone().multiplyScalar(dt));
+			
+			if (Math.abs(pos.x) > ww*3/4 - rad.value) {
+				vel.x *= -1;  	
+			}
+			if (Math.abs(pos.y) > hh*3/4 - rad.value) {
+				vel.y *= -1;  	
+			}
+			
+			circle.element.position.copy (pos);
+			//document.getElementById("circlePosition").innerHTML = "	球位置 X: " + pos.x + " Y: " + pos.y;		//球的位置
+		
+			setInterval(getPos(),1000); // should use setInterval (unless the Shell does not respond as fast			
+			render();
+			requestAnimationFrame(animate);
+		}
+
+		function render() {
+			renderer.render(scene, camera);
+		}		
+		
+		function getPos () {
+		
+			// Call api 
+			// Need to be replaced by a public ip address
+			$.get( "http://127.0.0.1:1337/api?R=" + rad.value + "&cX=" + pos.x + "&cY=" + pos.y + "&rX=" + rectangle.position.x + "&rY=" + rectangle.position.y, function( data ) {			
+				if(data && data.output){
+					var coords = data.output.split (' ');
+					//console.log("coords: " + coords);
+					console.log("hit: " + coords[0] + " rad: " + coords[1]  + " cX: " + coords[2] + " cY: " + coords[3] + " rX: " + coords[4]+ " rY: " + coords[5]);
+					
+					document.getElementById("rectanglePosition").innerHTML = "Rectangle X: " + coords[4] + " Y: " + coords[5];	//長方形位置
+					document.getElementById("circlePosition").innerHTML = "	位置 X: " + coords[2] + " Y: " + coords[3];		//球的位置
+					if(coords[0] == 1){
+						circle.hit(rad.value);
+						document.getElementById("hit").innerHTML = "Collision!!";	
+						document.getElementById("hit").style.color = '#ffff00';						
+					}else if(coords[0] == 0){
+						document.getElementById("hit").innerHTML = "No Collision";	
+						document.getElementById("hit").style.color = '#000000';	
+						scene.remove(circle.element);
+						circle = new Circle(rad.value);
+					}
+				}
+			});
+		}
+		</script>
+	</body>
+</html>
