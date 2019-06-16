@@ -41,7 +41,7 @@
 					this.pos = new THREE.Vector3(posiX, 0, posiZ);
 					this.vel = new THREE.Vector3();
 					this.force = new THREE.Vector3();
-					this.mesh = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), new THREE.MeshPhongMaterial({
+					this.mesh = new THREE.Mesh(new THREE.SphereGeometry(8, 32, 32), new THREE.MeshPhongMaterial({
 						color: 0xff1234,
 						specular: 0x444444,
 						shininess: 80
@@ -114,7 +114,7 @@
 						}
 					}
 					
-					//左側牆面碰撞
+					//左側牆面碰撞//wall[6] = new BoxGeom(50,10,5,-75,5,50,walltexture);
 					if (this.pos.x <= -42.5 && this.pos.x >= -90) {
 						if(this.pos.z <= 57.5 && this.pos.z >= 42.5) {
 							if (this.pos.z > 50) {
@@ -174,20 +174,17 @@
 				}
 			}
 			
-			//坑洞
-			class Pit {
-				constructor() {
-					pit = new THREE.Mesh(new THREE.SphereGeometry (6,32,32,0,6.3,3,3), new THREE.MeshPhongMaterial({
-						color: 0xbdbdbd,
-						specular: 0x444444,
-						shininess: 80
+			//圓物件
+			class Circle{
+				constructor(x, z){
+					this.x = x;
+					this.z = z;					
+					this.element = new THREE.Mesh( new THREE.CircleGeometry( 5, 32 ), new THREE.MeshBasicMaterial({ 
+						color: 0x000000 
 					}));
-				
-					pit.position.x = 89;
-					pit.position.z = 89;
-					pit.rotation.x = Math.PI;
-					
-					scene.add(pit);
+					this.element.rotation.x = -Math.PI / 2;
+					this.element.position.set(this.x,0,this.z);
+					scene.add(this.element);				
 				}
 			}
 			
@@ -200,8 +197,6 @@
 					this.x = x;
 					this.y = y;
 					this.z = z;	
-					//this.element.receiveShadow = true;
-					//this.element.castShadow = true;
 					this.element = new THREE.Mesh(new THREE.BoxBufferGeometry(this.width, this.height, this.depth), new THREE.MeshPhongMaterial({
 						side: THREE.DoubleSide,
 						map: texture
@@ -214,6 +209,7 @@
 			var camera, scene, renderer, light;
 			var plane;
 			var pit;
+			var hole;
 			var ball=[];
 			var wall=[];
 			var fall=[];
@@ -239,43 +235,32 @@
 
 				scene = new THREE.Scene();
 				renderer = new THREE.WebGLRenderer();
-				//renderer.setSize(window.innerWidth, window.innerWidth);		//2D innerWidth + innerWidth
-				renderer.setSize(window.innerWidth, window.innerHeight);	//3D
+				renderer.setSize(window.innerWidth, window.innerWidth);		//2D innerWidth + innerWidth
+				//renderer.setSize(window.innerWidth, window.innerHeight);	//3D
 				renderer.setClearColor(0x888888);
 				
 				//////////////////////////////////////////////////////////////////////////////				
 				//2D視角	
-				/*
+				
 				camera = new THREE.OrthographicCamera(-110, 110, 110, -110, 10, 2000);
 				camera.position.set(0, 450, 0);
 				camera.up.set(0, 0, -1);
 				camera.lookAt(new THREE.Vector3(0, 0, 0));
 				scene.add(camera);
-				*/
-				//////////////////////////////////////////////////////////////////////////////
-				//3D視角
 				
+				//3D視角
+				/*
 				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
 				camera.position.y = 200;
 				camera.position.z = 200;
 				controls = new THREE.OrbitControls(camera, renderer.domElement);
-				
+				*/
 				//////////////////////////////////////////////////////////////////////////////
-				/*
-				//document.addEventListener('mousemove', onDocumentMouseMove, false);
-				deviceInfo = document.getElementById('deviceInfo');
-				window.addEventListener('deviceorientation', function(e) {
-					gamma = e.gamma;
-					beta = e.beta;
-					console.log (gamma +', ' + beta + ', ' + e.alpha);
-				});
-				*/				
-				//var gridXZ = new THREE.GridHelper(200, 10, 'red', 'white');
-				//scene.add(gridXZ);
-				//scene.add (new THREE.AxisHelper (30))	
+	
 				document.body.appendChild(renderer.domElement);				
 				window.addEventListener('resize', onWindowResize, false);				
 				
+				//////////////////////////////////////////////////////////////////////////////
 				let floorWidth = 200;//地板寬度
 				let floorHeight = 200;//地板長度
 				
@@ -290,18 +275,16 @@
 				//地板幾何
 				let floor = new THREE.Mesh(new THREE.PlaneBufferGeometry(floorWidth, floorHeight), new THREE.MeshPhongMaterial({
 					side: THREE.FrontSide,
-					map: texture
+					//map: texture
 				}));
-				//floor.receiveShadow = true;	//超過13個光材質顯示不出來
 				floor.rotation.x = -Math.PI / 2;
-				floor.position.y = -10;			//地面下降10
+				floor.position.y = -1;			//地面下降1
 				scene.add(floor);
 
 				//////////////////////////////////////////////////////////////////////////////
-				//凹洞
-				pit = new Pit();
-
-				
+				//洞
+				hole = new Circle(85, 85);
+		
 				//////////////////////////////////////////////////////////////////////////////
 				//燈光
 				var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -316,10 +299,6 @@
 				for(let i=0;i<ball.length;i++){
 					fall[i]=false;
 				}
-
-				//////////////////////////////////////////////////////////////////////////////
-				//凹洞
-
 				////////////////////////////////////////////////
 				//牆面
 				let walltexture = loader.load('https://i.imgur.com/6J3Pftx.jpg');
@@ -373,9 +352,10 @@
 							ball[i].show(dt);
 						} else {
 							ball[i].hide()
-							ball[i].mesh.position.x = 89;
-							ball[i].mesh.position.y = 0;
-							ball[i].mesh.position.z = 89;
+							document.getElementById("deviceInfo").innerHTML = "進洞!";
+							setTimeout(function(){
+								ball[i].mesh.position.set(-85, 0, -85);
+							},1000);
 						}
 					} else {
 						ball[1].hide();
@@ -383,9 +363,10 @@
 							ball[0].show(dt);
 						} else {
 							ball[0].hide()
-							ball[0].mesh.position.x = 89;
-							ball[0].mesh.position.y = 0;
-							ball[0].mesh.position.z = 89;
+							document.getElementById("deviceInfo").innerHTML = "進洞!";
+							setTimeout(function(){
+								ball[0].mesh.position.set(-85, 0, -85);
+							},1000);							
 						}
 					}
 				}
